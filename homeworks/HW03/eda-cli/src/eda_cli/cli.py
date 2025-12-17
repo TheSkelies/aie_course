@@ -69,6 +69,7 @@ def report(
     max_hist_columns: int = typer.Option(6, help="Максимум числовых колонок для гистограмм."),
 
     top_k_categories: int = typer.Option(5, help="Сколько top-значений выводить для категориальных признаков."),
+    min_missing_share: float = typer.Option(0.3, help="Порог доли пропусков для проблемных колонок."),
 ) -> None:
     """
     Сгенерировать полный EDA-отчёт:
@@ -93,6 +94,11 @@ def report(
     # 2. Качество в целом
     quality_flags = compute_quality_flags(summary, missing_df)
 
+    # Определяем проблемные колонки по пропускам
+    problematic_cols = missing_df[missing_df["missing_share"] > min_missing_share]
+    problematic_list = problematic_cols.index.tolist()
+
+
     # 3. Сохраняем табличные артефакты
     summary_df.to_csv(out_root / "summary.csv", index=False)
     if not missing_df.empty:
@@ -113,6 +119,7 @@ def report(
         f.write(f"## Настройки отчёта\n\n")
         f.write(f"- Макс. гистограмм: **{max_hist_columns}**\n")
         f.write(f"- Top-k категорий: **{top_k_categories}**\n\n")
+        f.write(f"- Порог пропусков для проблемных колонок: **{min_missing_share:.0%}**\n\n")
 
 
         f.write("## Качество данных (эвристики)\n\n")
@@ -135,6 +142,12 @@ def report(
             f.write("Пропусков нет или датасет пуст.\n\n")
         else:
             f.write("См. файлы `missing.csv` и `missing_matrix.png`.\n\n")
+            if problematic_list:
+                f.write(f"\n**Проблемные колонки (пропусков > {min_missing_share:.0%}):**\n\n")
+                for col in problematic_list:
+                    missing_share = missing_df.loc[col, "missing_share"]
+                    f.write(f"- `{col}`: {missing_share:.1%} пропусков\n")
+            f.write("\n")
 
         f.write("## Корреляция числовых признаков\n\n")
         if corr_df.empty:
@@ -160,6 +173,9 @@ def report(
     typer.echo(f"- Основной markdown: {md_path}")
     typer.echo("- Табличные файлы: summary.csv, missing.csv, correlation.csv, top_categories/*.csv")
     typer.echo("- Графики: hist_*.png, missing_matrix.png, correlation_heatmap.png")
+
+    typer.echo(f"- Top-k категорий: {top_k_categories}")
+    typer.echo(f"- Порог пропусков: {min_missing_share:.0%}")
 
 
 if __name__ == "__main__":

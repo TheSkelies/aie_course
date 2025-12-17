@@ -211,6 +211,9 @@ def compute_quality_flags(summary: DatasetSummary, missing_df: pd.DataFrame) -> 
     if summary.n_cols > 100:
         score -= 0.1
 
+    if (missing_stats / all_stats) > 0.2: # качество ухудшается, больше 20 процентов пропусков
+        score -= 0.2
+
     score = max(0.0, min(1.0, score))
     flags["quality_score"] = score
 
