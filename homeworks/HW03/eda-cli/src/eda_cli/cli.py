@@ -131,8 +131,6 @@ def report(
 
         # Выводим новые эвристики
         f.write(f"- Есть константные колонки: **{quality_flags['has_constant_columns']}**\n")
-        f.write(
-            f"- Есть категории с высокой кардинальностью (> {quality_flags['high_cardinality_threshold']} уникальных): **{quality_flags['has_high_cardinality_categoricals']}**\n\n")
 
         f.write("## Колонки\n\n")
         f.write("См. файл `summary.csv`.\n\n")
